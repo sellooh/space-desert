@@ -34,9 +34,8 @@ func calculateGroupScore(category string, In chan domain.Resource, Out chan doma
 		groupPointer := &group
 		resourceInGroup := resourceInGroup{
 			Resource: resource,
-			// group:    groupPointer,
 		}
-		candidates[domain.Position{resourceInGroup.Row, resourceInGroup.Column}] = &resourceInGroup
+		candidates[domain.NewPosition(resourceInGroup.GetRow(), resourceInGroup.GetColumn())] = &resourceInGroup
 
 		// map for neighbours groups
 		neighbourGroups := mapset.NewSet[*groupSet]()
@@ -45,7 +44,7 @@ func calculateGroupScore(category string, In chan domain.Resource, Out chan doma
 		neighbours := domain.GenerateNeighbours(resource)
 
 		for _, neighbour := range neighbours {
-			if candidate, found := candidates[domain.Position{neighbour.Row, neighbour.Column}]; found {
+			if candidate, found := candidates[domain.NewPosition(neighbour.GetRow(), neighbour.GetColumn())]; found {
 				// merges the resources in a group
 				*groupPointer = group.Union(*candidate.group)
 				groups.Remove(*candidate.group)
@@ -88,7 +87,7 @@ func calculateGroupScore(category string, In chan domain.Resource, Out chan doma
 			groupPositions = append(groupPositions, positions)
 		}
 	}
-	Out <- domain.GroupScoreResult{category, total, groupPositions}
+	Out <- domain.GroupScoreResult{category, total, groupPositions} // TODO: maybe this type should not be in the domain?
 }
 
 func calculateScoreFromBoard(board domain.Board) <-chan domain.BoardResult {
@@ -179,9 +178,14 @@ func NewCalculateService() CalculateService {
 	return CalculateService{}
 }
 
-func (s CalculateService) Calculate(generator ports.ResourceGenerator) uint32 {
-	resourceChannel := generator.Generate()
+func (s CalculateService) Calculate(generator ports.ResourceGenerator) (uint32, error) {
+	errorChannel := make(chan error, 1)
+	resourceChannel := generator.Generate(errorChannel)
 	resultChannel := calculateScoreFromResourceChannel(resourceChannel)
-	result := <-resultChannel
-	return result.Score
+	select {
+	case err := <-errorChannel:
+		return 0, err
+	case result := <-resultChannel:
+		return result.Score, nil
+	}
 }

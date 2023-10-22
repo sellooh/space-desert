@@ -15,7 +15,10 @@ type LambdaEvent struct {
 
 func handler(ctx context.Context, event LambdaEvent) (uint32, error) {
 	calculateService := services.NewCalculateService()
-	score := calculateService.Calculate(fs_resource_generator.NewFsResourceGenerator(event.File))
+	score, err := calculateService.Calculate(fs_resource_generator.NewFsResourceGenerator(event.File))
+	if err != nil {
+		return 0, err
+	}
 
 	log.Println("file", event.File)
 	log.Println("score", score)

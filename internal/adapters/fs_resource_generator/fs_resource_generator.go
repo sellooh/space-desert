@@ -2,7 +2,6 @@ package fs_resource_generator
 
 import (
 	"bufio"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -20,14 +19,14 @@ func NewFsResourceGenerator(filename string) *FsResoureGenerator {
 	}
 }
 
-func (fs *FsResoureGenerator) Generate() <-chan domain.Resource {
+func (fs *FsResoureGenerator) Generate(errorChannel chan<- error) <-chan domain.Resource {
 	resourceChan := make(chan domain.Resource)
 
 	go func() {
 		defer close(resourceChan)
 		file, err := os.Open(fs.Filename)
 		if err != nil {
-			log.Fatal(err)
+			errorChannel <- err
 		}
 		defer file.Close()
 		scanner := bufio.NewScanner(file)
@@ -37,20 +36,32 @@ func (fs *FsResoureGenerator) Generate() <-chan domain.Resource {
 				continue
 			}
 			argSlice := strings.Split(line, ",")
-			row, _ := strconv.Atoi(argSlice[0])
-			column, _ := strconv.Atoi(argSlice[1])
+			row, err := strconv.Atoi(argSlice[0])
+			if err != nil {
+				errorChannel <- err
+				continue
+			}
+			column, err := strconv.Atoi(argSlice[1])
+			if err != nil {
+				errorChannel <- err
+				continue
+			}
 			color := argSlice[2]
-			multiplier, _ := strconv.Atoi(argSlice[3])
-			resource := domain.Resource{
-				Position:   domain.Position{Row: int32(row), Column: int32(column)},
-				Color:      domain.Color(color),
-				Multiplier: uint8(multiplier),
+			multiplier, err := strconv.Atoi(argSlice[3])
+			if err != nil {
+				errorChannel <- err
+				continue
+			}
+			resource, resourceError := domain.NewResource(int32(row), int32(column), domain.Color(color), uint8(multiplier))
+			if resourceError != nil {
+				errorChannel <- err
+				continue
 			}
 			resourceChan <- resource
 		}
 
 		if err := scanner.Err(); err != nil {
-			log.Fatal(err)
+			errorChannel <- err
 		}
 	}()
 

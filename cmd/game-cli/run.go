@@ -11,7 +11,10 @@ import (
 func run(args []string, stdout *os.File) error {
 	calculateService := services.NewCalculateService()
 
-	score := calculateService.Calculate(fs_resource_generator.NewFsResourceGenerator(args[1]))
+	score, err := calculateService.Calculate(fs_resource_generator.NewFsResourceGenerator(args[1]))
+	if err != nil {
+		return err
+	}
 
 	log.Println("score", score)
 	return nil
