@@ -1,9 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  go-al2
-  
-  Sample SAM Template for go-al2
+  Sample SAM Template
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
@@ -14,24 +12,22 @@ Resources:
   CalculateScoreFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      CodeUri: score/
-      Handler: bootstrap 
-      Runtime: provided.al2
+      CodeUri: ..
+      Handler: cmd/game-lambda/main.go
+      Runtime: go1.x
       Tracing: Active # https://docs.aws.amazon.com/lambda/latest/dg/lambda-x-ray.html
       Layers:
         - !Ref DataLayer
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
           PARAM1: VALUE
-    Metadata:
-      BuildMethod: makefile
 
   DataLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
         LayerName: sam-data-layer
         Description: Data for [calculate-score]
-        ContentUri: data/
+        ContentUri: ../data/
         LicenseInfo: 'MIT'
         RetentionPolicy: Retain
 
