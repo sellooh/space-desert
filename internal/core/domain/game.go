@@ -2,6 +2,15 @@ package domain
 
 import "errors"
 
+// -------- errors --------
+
+var (
+	ErrInvalidColor      = errors.New("invalid color")
+	ErrInvalidMultiplier = errors.New("invalid multiplier")
+)
+
+// -------- constants --------
+
 type Color string
 
 const (
@@ -12,10 +21,6 @@ const (
 	DarkPurple  Color = "DP"
 	LightPurple Color = "LP"
 )
-
-func isValidColor(color Color) bool {
-	return color == DarkBlue || color == LightBlue || color == DarkGreen || color == LightGreen || color == DarkPurple || color == LightPurple
-}
 
 type shiftDirection string
 
@@ -44,11 +49,21 @@ var shiftMap = transition{
 	BL: direction{row: -1, column: -1},
 }
 
+// -------- private functions --------
+
 func makeTransition(row, column int32, transition direction) Position {
 	return NewPosition(row+int32(transition.row), column+int32(transition.column))
 }
 
-// --------
+func isValidColor(color Color) bool {
+	return color == DarkBlue || color == LightBlue || color == DarkGreen || color == LightGreen || color == DarkPurple || color == LightPurple
+}
+
+func isValidMultiplier(multiplier uint8) bool {
+	return multiplier >= 1 && multiplier <= 6
+}
+
+// -------- public functions --------
 
 type Position struct {
 	row    int32
@@ -73,18 +88,13 @@ type Resource struct {
 	Multiplier uint8
 }
 
-var (
-	ErrInvalidColor      = errors.New("invalid color")
-	ErrInvalidMultiplier = errors.New("invalid multiplier")
-)
-
 func NewResource(x int32, y int32, color Color, multiplier uint8) (Resource, error) {
 	if !isValidColor(color) {
 		return Resource{}, ErrInvalidColor
 	}
-	// if multiplier < 1 || multiplier > 6 {
-	// 	return Resource{}, ErrInvalidMultiplier
-	// }
+	if !isValidMultiplier(multiplier) {
+		return Resource{}, ErrInvalidMultiplier
+	}
 	return Resource{
 		Position:   NewPosition(x, y),
 		Color:      color,
