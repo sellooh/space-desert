@@ -1,6 +1,6 @@
 ```sh
 # run cli
-$ go run cmd/game-cli/*.go
+$ go run cmd/game-cli/*.go data/1k-automata.txt
 
 # sam build
 $ sam build -t infrastructure/template.yaml
