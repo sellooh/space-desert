@@ -12,6 +12,17 @@ $ go run cmd/game-cli/*.go data/1k-automata.txt
 # sam build
 $ sam build -t infrastructure/template.yaml
 
-# sam local invoke
-$ sam local invoke CalculateScoreFunction -e events/10k.json
+# sam deploy (simplified)
+$ sam deploy --config-file infrastructure/samconfig.toml
+
+# sam deploy (with parameters)
+$ sam deploy --stack-name space-desert -t infrastructure/template.yaml --parameter-overrides MountDataLayer=false
+
+# sam invoke
+$ sam remote invoke LAMBDA_ARN --event-file events/10k.json
 ```
+
+##### sam local invoke
+
+sam local doesn't evaluate cloudformation conditionals. Avoid using It [issue](https://github.com/aws/aws-sam-cli/issues/194).
+

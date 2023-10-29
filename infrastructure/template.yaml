@@ -1,26 +1,41 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  Sample SAM Template
+  SAM Template for Space Desert
 
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Timeout: 90
 
+Parameters:
+  MountDataLayer:
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+    Description: Mount the data layer to the function
+
+Conditions:
+  ShouldMountDataLayer: !Equals [ !Ref MountDataLayer, true ]
+
 Resources:
   CalculateScoreFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
     Properties:
       CodeUri: ..
-      Handler: cmd/game-lambda/main.go
-      Runtime: go1.x
-      Tracing: Active # https://docs.aws.amazon.com/lambda/latest/dg/lambda-x-ray.html
-      Layers:
-        - !Ref DataLayer
-      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+      Handler: bootstrap
+      Runtime: provided.al2
+      Architectures: [arm64]
+      MemorySize: 128
+      Tracing: Active
+      Environment:
         Variables:
-          PARAM1: VALUE
+          HasDataLayer: !Ref MountDataLayer
+      Layers:
+        !If [ShouldMountDataLayer, [!Ref DataLayer], !Ref AWS::NoValue]
 
   DataLayer:
     Type: AWS::Serverless::LayerVersion
@@ -29,13 +44,13 @@ Resources:
         Description: Data for [calculate-score]
         ContentUri: ../data/
         LicenseInfo: 'MIT'
-        RetentionPolicy: Retain
+        RetentionPolicy: Delete
 
 Outputs:
-  HelloWorldFunction:
-    Description: "First Lambda Function ARN"
+  CalculateScoreFunction:
+    Description: "CalculateScoreFunction ARN"
     Value: !GetAtt CalculateScoreFunction.Arn
-  HelloWorldFunctionIamRole:
-    Description: "Implicit IAM Role created for Hello World function"
+  CalculateScoreFunctionIamRole:
+    Description: "Implicit IAM Role created for CalculateScoreFunction"
     Value: !GetAtt CalculateScoreFunctionRole.Arn
 
